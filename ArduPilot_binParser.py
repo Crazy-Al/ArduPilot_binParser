@@ -1,8 +1,9 @@
 '''
-Author:     Alex Zaleski
+Author:     Alex Zaleski (Emerging Technologies ITF, Edwards AFB)
+Email:      alexander.zaleski.1@us.af.mil
 Created:    16 Dec 2023
-Modified:   3 Jan 2024
-Version:    4.0
+Modified:   17 Jun 2024
+Version:    4.5
 
 Description:
     -- Information about an Ardupilot .bin File --
@@ -48,7 +49,7 @@ Description:
     | Data (Packet length (based on the corresponding FMT message) - 3 bytes) |
      -------------------------------------------------------------------------
 
-Usgae:
+Usage:
     python ./ArduPilot_binParser.py
  - OR -
     from ArduPilot_binParser import ArduPilotLog
@@ -56,6 +57,7 @@ Usgae:
 
 import struct           # used to convert binary data to usabel data
 import pandas as pd     # to export data as .csv
+import numpy as np
 import datetime         # used for date and time properties
 
 class ArduPilotLog:
@@ -70,8 +72,6 @@ class ArduPilotLog:
             file (string): Filepath to the .bin file to use.
         modifies:
             Initializes class properties
-        Return:
-            None
         '''
         self.fileName = file
         self.fileSize = None
@@ -79,17 +79,13 @@ class ArduPilotLog:
         self.packetHeader = b'\xa3\x95'
         self.FMT2ID = {'FMT':128}
         self.msgFormat = {128:[128,89,'FMT','BBnNZ','Type,Length,Name,Format,Columns']} #{msgTypeID:[msgTypeID, packetLength, msgType, ardupilot format, column headers]}
-        self.messages = []  # will be a list Message objects
+        self.messages = []  # will be a list of Message objects
 
     class Message:  #ArduPilotLog.Message
         def __init__(self):
             '''Internal class to represent a message.
-            Args:
-                None
             Modifies:
                 Initializes message object properties
-            Returns:
-                None
             '''
             self.date ='NO DATA'
             self.timeUTC ='NO DATA'
@@ -113,8 +109,6 @@ class ArduPilotLog:
             self.messages: Appends Message objects to this list.
             self.msgFormat: Updates the msgFormat dictionnary with additional message formats
             self.FMT2ID: Updates the FMT2ID dictionary with additional Message Type Name: Mssage Type ID pairs.
-        Return: 
-            None
         '''
         msg=ArduPilotLog.Message()
         msg.typeID=msgTypeID
@@ -145,13 +139,9 @@ class ArduPilotLog:
         '''Populates the date and time properties for each message. This is done by estimating the 
         time and date based on the nearest previouse GPS message.
 
-        Args:
-            None
         Modifies: 
             self.messages: This method updates the date and timeUTC properties of all message objects 
             that are stored in self.messages.
-        Return:
-            None
         '''
         date='No Data'
         time='No Data'
@@ -180,8 +170,6 @@ class ArduPilotLog:
         '''Convert bytes to string characters
         Args: 
             byteString (bytes): Series of bytes to convert to Unicode string.
-        Modifies:
-            None
         Return:
             (string): Unicode string representation of the given byteString.
         '''
@@ -197,8 +185,6 @@ class ArduPilotLog:
             GWK (int): GWK component from the timestamp in the GPS message.
             GMS (int): GMS component from the timestamp in the GPS message.
             leapSeconds (int): (Optional) Look it up if you don't know what leapseconds are.
-        Modifies:
-            None
         Returns:
             (datetime): DateTime object in UTC corresponding to the given method inputs.
         '''
@@ -217,8 +203,6 @@ class ArduPilotLog:
             GPS_datum (datetime): datetime object representing the GPS timestamp.
         Modifies:
             self.messages: Modifies the date and time UTC properties of the message objects in self.messages.
-        Return:
-            None
         '''
         #datetimeformat = "%m-%d-%Y %H:%M:%S.%f"
         date ='No Date'
@@ -235,11 +219,7 @@ class ArduPilotLog:
     def __loadDataFieldFormats(self):
         '''This is the key to translating between ArduPilot format and struct format.
         ardu_format: (struct_format)
-
-        Args:
-            None
-        Modifies:
-            None
+        
         Returns:
             (dict): Returns a dictionary where the ardu_format are the keys 
                     and struct_format tuples are the values.
@@ -281,8 +261,6 @@ class ArduPilotLog:
             self.messages: Appends Message objects to this list and updates their date and time properties.
             self.msgFormat: Updates the msgFormat dictionnary with additional message formats
             self.FMT2ID: Updates the FMT2ID dictionary with additional Message Type Name: Mssage Type ID pairs.
-        Return: 
-            None
         '''
         with open(self.fileName,'rb', buffering=1000000) as binFile:
             binFile.seek(0,2) #move curser to end of file
@@ -319,8 +297,6 @@ class ArduPilotLog:
                                     in the dataFrame.
             csv (bool): (Optional) Set to True if you want the resulting dataFrame to be exported 
                         and saved as a .csv, default False.
-        Modifies:
-            None
         Returns:
             (DataFrame): A dataFrame consisting of messages beloning only to the specified message type.
                          Each row is an indivitual message. 
@@ -333,7 +309,7 @@ class ArduPilotLog:
         filteredData = [[msg.date.strftime('%Y-%m-%d'), msg.timeUTC.strftime('%H:%M:%S.%f'), msg.type, *msg.data] for msg in self.messages if msg.type == msgFilterType]
         df=pd.DataFrame(data=filteredData, columns=columnHeaders)
         if csv:
-            filename=f"{self.fileName[0:-4]}_{msgFilterType}.csv"
+            filename=f"{self.fileName[0:-4]} {msgFilterType}.csv"
             df.to_csv(filename,index=False)
             print(f'CSV saved to {filename}.')
         return df
@@ -343,12 +319,9 @@ class ArduPilotLog:
         '''Creates a dataframe of all messages in the self.messages property. 
         Returns dataframe. Saves dataFrame as .csv if csv is set True. CSV is
         saved to same directory as .bin file.
-
         Args:
             csv (bool): (Optional) Set to True if you want the resulting dataFrame to be exported 
                         and saved as a .csv, default False.
-        Modifies:
-            None
         Returns:
             (DataFrame): A dataFrame consisting of messages beloning only to the specified message type.
                          Each row is an indivitual message. 
@@ -369,32 +342,154 @@ class ArduPilotLog:
     
     def getMessageTypes(self):
         '''Returns a list of all Message Type Names what are present in the log.
-        Args:
-            None
-        Modifies:
-            None
         Return:
             (list): List of Message Type Names present in the log
         '''
         return list(self.FMT2ID.keys())
+        
+    def saveAsGreatArc(self, filename):
+        '''Creates a GreatArc file from the log data.
+            
+        Args:
+            fileName (str): Name and location to save the GreatArc file.
+        '''
+        ga = GreatArc(self)
+        ga.saveToFile(filename)
+
+class GreatArc:
+    ''' Forms data into a structure specified by the GreatArc file.
+    Reference: https://help.agi.com/stk/index.htm#stk/importfiles-05.htm
+    '''
+    def __init__(self, log: ArduPilotLog):
+        '''
+        Args:
+            log (ArduPilotLog): the ArduPilotLog object to format a GreatArc object.
+        Returns:
+            (GreatArc): GreatArc object containing the necessary data.
+        '''
+        self.stk_version = 'stk.v.12.4'
+        self.method = 'DetVelFromTime'
+        self.ArcGranularity = 5.729577951308e-001
+        self.AltRef = 'WGS84'
+        self.AltInterpMethod = 'EllipsoidHeight'
+        self.epoch_DateTime = ''
+        self.data = self.__formDataStructure(log)
+        
+    def __formDataStructure(self, log: ArduPilotLog) -> pd.DataFrame:
+        ''' Internal method that extracts the necisary data from the ArduPilotLog object and 
+        formats it into a Pandas DataFrame according the the GreatArc protocol. 
+        Args:
+            log (ArduPilotLog): ArduPilotLog object to extract needed data from.
+        Returns:
+            (pd.DataFrame): DataFrame in to structure of GreatArc waypoints.
+        '''
+        def getLatLngAltSpdTime(log: ArduPilotLog) -> pd.DataFrame:
+            frame_gps = log.filter('GPS')
+            frame_gps['DateTime_UTC'] = pd.to_datetime(frame_gps['Date']+' '+frame_gps['UTC']).dt.round('ms')
+            return frame_gps[['DateTime_UTC','Lat', 'Lng', 'Alt', 'Spd']]
+        def getAcceleration(log: ArduPilotLog) -> pd.DataFrame:
+            frame_acc = log.filter('IMU')
+            frame_acc['DateTime_UTC'] = pd.to_datetime(frame_acc['Date']+' '+frame_acc['UTC']).dt.round('ms')
+            frame_acc = frame_acc[['DateTime_UTC', 'I', 'AccX', 'AccY', 'AccZ']]
+            frame_acc = frame_acc.groupby('DateTime_UTC').mean().reset_index()
+            frame_acc['Acc'] = np.sqrt(np.sum(frame_acc[['AccX', 'AccY', 'AccZ']].values**2, axis=1))
+            return frame_acc
+        def detectSampleRate(frame: pd.DataFrame) -> int:
+            '''Computes the sample rate for the given DataFrame in Hz.
+            
+            Args:
+                frame(pd.DataFrame): DataFrame with samples. Needs 'DateTime_UTC' column
+            Returns:
+                (int): Sample rate of the given DataFrame in Hz.
+            '''
+            totalSeconds = (frame['DateTime_UTC'].iloc[-1] - frame['DateTime_UTC'].iloc[0]).total_seconds()
+            numSamples = frame.shape[0]
+            return round(numSamples/totalSeconds) #Hz       
+        def resample(frame: pd.DataFrame, desiredSampleRate_Hz: int) -> pd.DataFrame:
+            '''Creates a new DataFrame at the desired sample rate of the given DataFrame.
+            Args:
+                frame (pd.DataFrame): The DataFrame to resample. Must have a column titled, 'DateTime_UTC'.
+                desiredSampleRate_Hz (int): The datarate to up or down sample the given DataFrame to.
+            Returns:
+                (pd.DataFrame): A new DataFrame containing the data of the given DataFrame sampled at the desire frequency. 
+            '''
+            currentSampleRate_Hz = detectSampleRate(frame)
+            if currentSampleRate_Hz == desiredSampleRate_Hz: 
+                # No resampling
+                frame_resampled = frame
+            elif currentSampleRate_Hz > desiredSampleRate_Hz: 
+                # Downsample
+                frame_resampled = frame.set_index('DateTime_UTC').resample(f'{1/desiredSampleRate_Hz}s').nearest().reset_index()
+            else:
+                # Upsample
+                frame_resampled = frame.set_index('DateTime_UTC').resample(f'{1/desiredSampleRate_Hz}s').mean().interpolate().reset_index()
+            return frame_resampled
+        def compute_seondsFromEpoch(frame_DateTime: pd.DataFrame):
+            '''
+            Computes the time difference in seconds for each datapoint from the reference time,
+            epoch_DateTime. This is how GreatArc files reference time in their files.
+            
+            Args:
+                frame_DateTime (pd.DataFrame): A dataframe with the column header, "DateTime_UTC"
+                                               that contains the time of each datapoint. 
+            Returns:
+                (DateTime): The DateTime that all other points are refferenced from.
+                (pd.DataFrame): A single column DataFrame containint the seconds since epoch time
+                                for each sample. Column header is "Seconds".
+            '''
+            epoch_DateTime = frame_DateTime.loc[0, 'DateTime_UTC']
+            frame_DateTime.loc[:,'seconds']=(frame_DateTime['DateTime_UTC'] - epoch_DateTime).dt.total_seconds()
+            frame_DateTime['seconds'] = frame_DateTime['seconds'].apply(lambda x: f'{x:.6e}')
+            return epoch_DateTime, frame_DateTime['seconds'].to_frame()
+            
+        frame_GPS = getLatLngAltSpdTime(log) 
+        frame_ACC = getAcceleration(log)
+        desiredSampleRate_Hz = detectSampleRate(frame_GPS)
+        frame_ACC = resample(frame_ACC, desiredSampleRate_Hz)
+        epoch_DateTime, frame_TIME = compute_seondsFromEpoch(frame_GPS[['DateTime_UTC']].copy())
+        self.epoch_DateTime = epoch_DateTime.strftime('%d %b %Y %I:%M:%S.%f')
+        frame_GreatArc = pd.concat([frame_GPS[['Lat','Lng','Alt','Spd']],
+                                    frame_ACC[['Acc']],
+                                    frame_TIME[['seconds']]],
+                                   axis=1)
+        frame_GreatArc['TurnRadius'] = np.zeros(frame_GreatArc.shape[0])
+        return frame_GreatArc
     
+    def saveToFile(self, filename: str):
+        ''' Creates a text file with extension, .ga, that contains all the necisary 
+        information for a GreatArc file.
+        
+        Args:
+            filename (string): Location and filename where the .ga file will be saved. 
+        '''
+        with open(filename, 'w') as f:
+            f.write(f'{self.stk_version}\n')
+            f.write('BEGIN GreatArc\n')
+            f.write(f'\tMethod\t{self.method}\n')
+            f.write(f'\tTimeOfFirstWaypoint\t{self.epoch_DateTime}\n')
+            f.write(f'\tArcGranularity\t{self.ArcGranularity}\n')
+            f.write(f'\tAltRef\t{self.AltRef}\n')
+            f.write(f'\tAltInterpMethod\t{self.AltInterpMethod}\n')
+            f.write(f'\tNumberOfWaypoints\t{self.data.shape[0]}\n')
+            f.write(f'\tBEGIN Waypoints\n')
+            for sampleNum, waypoint in self.data.iterrows():
+                dataSample = f'{waypoint['seconds']} {waypoint['Lat']} {waypoint['Lng']} {waypoint['Alt']} {waypoint['Spd']} {waypoint['Acc']} {waypoint['TurnRadius']}'
+                f.write(f'\t\t{dataSample}\n')
+            f.write(f'\tEND Waypoints\n')
+            f.write(f'END GreatArc')
 
 
 
 if __name__ == '__main__':
-    import time         #Only used for testing, should be deleted
     import tkinter as tk   #Needed to stops and annoying gray box from popping up.   
     from tkinter.filedialog import askopenfilename  #user to open file manager
     tk.Tk().withdraw()     #Stops and annoying gray box from popping up.
 
     file=askopenfilename()  #open file manager
-    tic = time.perf_counter()
     log = ArduPilotLog(file)
     log.parse(verbose=True)
-    toc=time.perf_counter()
-    print(f'Total time: {toc-tic:0.4f} seconds')
-    frame1=log.filter('GPS')
-    frame2=log.filter('UNIT',csv=True)
+    frame1=log.filter('GPS', csv=True)
+    frame2=log.filter('UNIT')
     frame3=log.filter('FMT')
     frame4=log.all(csv=True)
     msgTypes = log.getMessageTypes()  
