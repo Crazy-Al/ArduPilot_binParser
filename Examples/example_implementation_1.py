@@ -1,12 +1,16 @@
 '''
-Author:     Alex Zaleski
+Author: CrazyAl_
 
+Description:
+    This script shows how to read in a .bin file and filter/manipulate the log. 
 '''
 
-
+import os
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
-from ArduPilot_binParser import ArduPilotLog
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from ardupilot_binparser import ArduPilotLog
 
 def printFlightReport(log):
     print('\n-------------------------------------------------')
@@ -94,8 +98,8 @@ if __name__ == '__main__':
     from tkinter.filedialog import askopenfilename  #user to open file manager
     tk.Tk().withdraw()     #Stops and annoying gray box from popping up.
 
-    file = askopenfilename()  #open file manager
-    log = ArduPilotLog(file)
+    logFile = askopenfilename(defaultextension='.bin',initialdir=f'{os.getcwd()}/ExampleNinFiles', title="Select .bin file")  #open file manager
+    log = ArduPilotLog(logFile)
     log.parse(verbose=True)
     printFlightReport(log)
     print('\n-------------------------------------------------')

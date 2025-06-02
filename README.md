@@ -1,10 +1,10 @@
-# ArduPilot_binFile_parser
+# ArduPilot Bin File Parser
 
 ## Description
 
 The ArduPilotLog class is a useful way to transfer the data in the ArduPilot *.bin* file into a Pandas Dataframe that can be further processed in Python.
 
-## Background on Ardupilot *.bin* Files
+## Background on ArduPilot *.bin* Files
 
 ### _Packet Layout_
 
@@ -56,11 +56,11 @@ The only way you know what message type the data belongs to is by looking at the
 
 Once you know the *Message Type ID*, you can then look at the `FMT` messages to define the data fields and their field labels.
 
-## TEST_ArduPilot_binParser (Testing Scipt)
+## test_ardupilot_binparser (Testing Scipt)
 
-The `TEST_ArduPilot_binParser` module is the unit testing script. Its purpose is to ensure that future changes do not cause unintended errors.
+The `test_ardupilot_binparser` module is the unit testing script. Its purpose is to ensure that future changes do not cause unintended errors.
 
-If you make changes to the `ArduPilot_binParser` module, please run `TEST_ArduPilot_binParser` to ensure that no changes cause errors. Furthermore, if you add new functionality to the `ArduPilot_binParser` module, please update the `TEST_ArduPilot_binParser` module by adding appropriate unit tests for those new features.
+If you make changes to the `arduPilot_binParser` module, please run `test_ardupilot_binparser` to ensure that no changes cause errors. Furthermore, if you add new functionality to the `ardupilot_binparser` module, please update the `test_ardupilot_binparser` script to add appropriate unit tests for your new features.
 
 ## rawBIN_Viewer (Support Tool)
 
@@ -80,27 +80,31 @@ These scripts are examples of possible ways you can use and implement the `ArduP
 
 ## Installation
 
-Clone and copy the `ArduPilot_binParser.py` file into your project directory or Python library directory.
+Clone and copy the `ardupilot_binparser.py` file into your project directory or Python library directory.
 
 ## Usage
 
 ### Option 1 - As a standalone Python program
 
-`python ./ArduPilot_binParser.py`
+`python ./ardupilot_binparser.py`
 
 ### Option 2 - As an imported Pythonmodule
 
-`from ArduPilot_binParser import ArduPilotLog`
+`from ardupilot_binparser import ArduPilotLog`
+
+## Support
+
+You can contact the author for support at alexander.zaleski.1@us.af.mil.
 
 ## Contributing
 
 ❤ Contributions are welcome!
 
-Before submitting a merge request, please run TEST_ArduPilot_binParser.py and ensure that all tests pass.
-
 ## Authors and acknowledgment
 
-**Author:** Alexander Zaleski
+**Author:** Alexander Zaleski (AF Civilian Employee)
+
+**Email:** alexander.zaleksi.1@us.af.mil
 
 ## Project status
 
