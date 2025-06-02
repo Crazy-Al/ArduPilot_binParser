@@ -1,0 +1,25 @@
+name: Test ardupilot_binparser
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: continuumio/anaconda3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run tests
+        run: |
+          echo "Test Phase:"
+          cd Test
+          python test_ardupilot_binparser.py
